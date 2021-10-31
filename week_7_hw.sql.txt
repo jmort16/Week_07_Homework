@@ -1,0 +1,4 @@
+WEEK 7 HOMEWORK
+
+#1  Create a new column called “status” in the rental table that uses a case statement to indicate if a film was returned late, early, or on time. 
+
