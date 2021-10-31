@@ -2,3 +2,84 @@ WEEK 7 HOMEWORK
 
 #1  Create a new column called “status” in the rental table that uses a case statement to indicate if a film was returned late, early, or on time. 
 
+SELECT
+	CASE 
+		WHEN EXTRACT(day FROM r.return_date - r.rental_date) > f.rental_duration THEN 'Late'
+		WHEN EXTRACT(day FROM r.return_date - r.rental_date) < f.rental_duration THEN 'Early'  
+		ELSE 'On Time' END
+		AS status,
+		COUNT(*)
+FROM film AS f
+	LEFT JOIN inventory AS inv
+	ON f.film_id = inv.film_id
+	LEFT JOIN rental AS r
+	ON inv.inventory_id=r.inventory_id
+GROUP BY status
+LIMIT 10;
+
+/*  Honestly, this is exactly how I had handled question #8 from the week 6 homework.  I couldn't figure out any other way to get the results than to use a CASE statement.  All I had to do here was to change the new column name from return_status, as I originally called it, to status.  For further explanation, see question 8 from my week 6 homework.  ;)*/
+
+
+#2  Show the total payment amounts for people who live in Kansas City or Saint Louis.
+
+SELECT 
+	cust.last_name,
+	cust.first_name,
+	city.city,
+	SUM(pmt.amount) AS total_payments
+FROM city
+LEFT JOIN address
+ON city.city_id = address.city_id
+LEFT JOIN customer AS cust
+ON address.address_id=cust.address_id
+LEFT JOIN payment as pmt
+ON cust.customer_id = pmt.customer_id
+WHERE city.city = 'Kansas City' OR city.city = 'Saint Louis'
+GROUP BY city.city, cust.last_name, cust.first_name
+
+/* First, I mapped out a plan on paper to connect the city name with the payment amount, which is my ultimate goal
+(by way of customer, of course).  I started with city, left joined that to address by city_id, then to customer by 
+address_id, then to payment by customer_id.  I used the aggregate SUM to find the total payments by customer, and
+included that in my SELECT statement at the start.  According to my table, there is only one customer from Saint
+Louis and one from Kansas City...which seems strange, to be honest.  But I did some further filtering through the
+data and this seems to be accurate. */
+
+#3  How many films are in each category? Why do you think there is a table for category and a table for film category?
+
+SELECT 
+	cat.name as category,
+	COUNT(fc.film_id) AS number_of_films
+FROM category AS cat
+LEFT JOIN film_category AS fc
+ON cat.category_id = fc.category_id
+GROUP BY category
+ORDER BY category;
+
+/*  I only needed to join two tables this time, so that was nice!  :)  I wanted to display the category name, but 'name'
+was too vague, so I aliased it as 'category'.  I used the aggregate COUNT to find the number of film_id's by category.
+Of course, I had to join the category and film_category tables in order to accomplish that.*/
+
+/* As to why there is a table for category and another table for film_category, I think that the category table serves the purpose of assigning an ID number to each new category, whereas the film_category table serves to assign each film (via its ID) to the appropriate category. */
+
+#4  Show a roster for the staff that includes their email, address, city, and country (not ids)
+
+SELECT
+	s.last_name,
+	s.first_name,
+	s.email,
+	address.address,
+	city.city, 
+	country.country
+FROM staff AS s
+	LEFT JOIN address
+	ON s.address_id = address.address_id
+	LEFT JOIN city
+	ON address.city_id = city.city_id
+	LEFT JOIN country
+	ON city.country_id=country.country_id
+
+/*  This query was just a matter of locating the tables containing each of the fields I needed to include in my SELECT
+statement, then joining all of the tables necessary to gather the information into one table.  I used the ID for the
+purpose of joining, but none were listed in my SELECT statement, which means that they won't appear in my result. */
+
+#5  Show the film_id, title, and length for the movies that were returned from May 15 to 31, 2005
