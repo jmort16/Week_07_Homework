@@ -2,22 +2,39 @@ WEEK 7 HOMEWORK
 
 #1  Create a new column called “status” in the rental table that uses a case statement to indicate if a film was returned late, early, or on time. 
 
-SELECT
-	CASE 
-		WHEN EXTRACT(day FROM r.return_date - r.rental_date) > f.rental_duration THEN 'Late'
-		WHEN EXTRACT(day FROM r.return_date - r.rental_date) < f.rental_duration THEN 'Early'  
-		ELSE 'On Time' END
-		AS status,
-		COUNT(*)
-FROM film AS f
+ALTER TABLE rental
+ADD status VARCHAR(8);
+SELECT *
+FROM film
 	LEFT JOIN inventory AS inv
-	ON f.film_id = inv.film_id
+		ON film.film_id = inv.film_id
 	LEFT JOIN rental AS r
-	ON inv.inventory_id=r.inventory_id
-GROUP BY status
-LIMIT 10;
+		ON inv.inventory_id=r.inventory_id
+UPDATE rental SET status =  WHERE ;
+UPDATE rental SET status = 'Early' WHERE ;
+UPDATE rental SET status = 'On Time' WHERE (EXTRACT (DAY FROM rental.return_date - rental.rental_date)) = film.rental_duration;
+SELECT
+	film.title,
+	r.status
+FROM film
+	LEFT JOIN inventory AS inv
+		ON f.film_id = inv.film_id
+	LEFT JOIN rental AS r
+		ON inv.inventory_id=r.inventory_id
+		
+--Mangai's suggestion:
+UPDATE rental
+SET status =
+    CASE WHEN (EXTRACT (DAY FROM rental.return_date - rental.rental_date)) > film.rental_duration THEN 'Late'
+		WHEN (EXTRACT (DAY FROM rental.return_date - rental.rental_date)) < film.rental_duration THEN 'Early'
+		ELSE 'On Time'
+FROM film
 
-/*  Honestly, this is exactly how I had handled question #8 from the week 6 homework.  I couldn't figure out any other way to get the results than to use a CASE statement.  All I had to do here was to change the new column name from return_status, as I originally called it, to status.  For further explanation, see question 8 from my week 6 homework.  ;)*/
+
+/*  
+
+
+
 
 
 #2  Show the total payment amounts for people who live in Kansas City or Saint Louis.
@@ -102,5 +119,51 @@ film table to the rental table, however, so that I could filter the films by ret
 table to connect my joins between the film and rental tables.  Finally, I ordered by rental date just to verify the
 efficacy of my query. */
 
+
 #6  Write a subquery to show which movies are rented below the average price for all movies. 
 
+SELECT 
+	title
+FROM film
+WHERE rental_rate < (SELECT 
+	 			AVG(rental_rate)
+	 			FROM film)
+
+/* I selected the title and rental_rate columns from the film table, then wrote a subquery that would find the average
+rental rate for the films.  I used my subquery in the WHERE clause to compare each film's rental rate with the average,
+and displayed only those films with a lower than average rental rate. */
+
+
+#7  Write a join statement to show which movies are rented below the average price for all movies.
+
+SELECT 
+	title,
+	rental_rate,
+	AVG(rental_rate) AS avg_rental_rate
+FROM 
+	film
+WHERE rental_rate < avg_rental_rate
+
+#8  Perform an explain plan on 6 and 7, and describe what you’re seeing and important ways they differ.
+
+	For question 6:
+	"Seq Scan on film  (cost=66.51..133.01 rows=333 width=21)"
+	"  Filter: (rental_rate < $0)"
+	"  InitPlan 1 (returns $0)"
+	"    ->  Aggregate  (cost=66.50..66.51 rows=1 width=32)"
+	"          ->  Seq Scan on film film_1  (cost=0.00..64.00 rows=1000 width=6)"
+
+
+#9  With a window function, write a query that shows the film, its duration, and what percentile the duration fits into. This may help https://mode.com/sql-tutorial/sql-window-functions/#rank-and-dense_rank 
+
+SELECT
+	film.title,
+	film.length,
+	NTILE(100) OVER
+         (ORDER BY film.length)
+         AS percentile
+FROM film
+ORDER BY percentile DESC;
+
+
+#10  In under 100 words, explain what the difference is between set-based and procedural programming. Be sure to specify which sql and python are. 
