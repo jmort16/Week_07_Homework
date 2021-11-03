@@ -128,24 +128,55 @@ and displayed only those films with a lower than average rental rate. */
 #7  Write a join statement to show which movies are rented below the average price for all movies.
 
 SELECT 
-	title,
-	rental_rate,
-	AVG(rental_rate) AS avg_rental_rate
+	f1.title as films_with_lower_than_avg_rental_fee, 
+	f1.rental_rate
 FROM 
-	film
-WHERE rental_rate < avg_rental_rate
+	film AS f1
+CROSS JOIN 
+	film AS f2
+GROUP BY f1.title, f1.rental_rate
+HAVING f1.rental_rate < AVG(f2.rental_rate);
+
+/*  In order to use JOIN as the instructions required on this question, I had to CROSS
+JOIN the film table to itself.  All of the information needed for the query was
+contained in the film table, so joining multiple tables was not necessary.  I used 
+HAVING instead of WHERE in this situation so that I could use the aggregate function
+AVG over all of the rows instead of each row individually.  */
 
 #8  Perform an explain plan on 6 and 7, and describe what you’re seeing and important ways they differ.
 
 	For question 6:
-	"Seq Scan on film  (cost=66.51..133.01 rows=333 width=21)"
+	"Seq Scan on film  (cost=66.51..133.01 rows=333 width=15) (actual time=0.315..0.513 rows=341 loops=1)"
 	"  Filter: (rental_rate < $0)"
+	"  Rows Removed by Filter: 659"
 	"  InitPlan 1 (returns $0)"
-	"    ->  Aggregate  (cost=66.50..66.51 rows=1 width=32)"
-	"          ->  Seq Scan on film film_1  (cost=0.00..64.00 rows=1000 width=6)"
+	"    ->  Aggregate  (cost=66.50..66.51 rows=1 width=32) (actual time=0.300..0.300 rows=1 loops=1)"
+	"          ->  Seq Scan on film film_1  (cost=0.00..64.00 rows=1000 width=6) (actual time=0.005..0.110 rows=1000 loops=1)"
+	"Planning Time: 0.148 ms"
+	"Execution Time: 0.551 ms"
+	
+	For question #7:
+	"HashAggregate  (cost=20130.50..20145.50 rows=333 width=21) (actual time=512.780..513.285 rows=341 loops=1)"
+	"  Group Key: f1.title, f1.rental_rate"
+	"  Filter: (f1.rental_rate < avg(f2.rental_rate))"
+	"  Batches: 1  Memory Usage: 577kB"
+	"  Rows Removed by Filter: 659"
+	"  ->  Nested Loop  (cost=0.00..12630.50 rows=1000000 width=27) (actual time=0.038..139.549 rows=1000000 loops=1)"
+	"        ->  Seq Scan on film f1  (cost=0.00..64.00 rows=1000 width=21) (actual time=0.022..0.634 rows=1000 loops=1)"
+	"        ->  Materialize  (cost=0.00..69.00 rows=1000 width=6) (actual time=0.000..0.037 rows=1000 loops=1000)"
+	"              ->  Seq Scan on film f2  (cost=0.00..64.00 rows=1000 width=6) (actual time=0.009..0.207 rows=1000 loops=1)"
+	"Planning Time: 0.210 ms"
+	"Execution Time: 513.448 ms"
+
+	The subquery technique used in question 6 filters the table first, removing 659 rows from the data, THEN it aggregates the 
+	remaining data that made it through the filtering process.  In contrast, the joining technique used in question 7 aggregates
+	first (using ALL of the rows), then filters through and removes rows afterward.  I think this must explain why the execution
+	time for question 6's query was almoat a thousand times faster than question 7's query.  Yikes!  Unfortunately, I strongly
+	prefer joining to subqueries at the moment.  I guess I need to force myself to do more subqueries!  *?
+	The joining
 
 
-#9  With a window function, write a query that shows the film, its duration, and what percentile the duration fits into. This may help https://mode.com/sql-tutorial/sql-window-functions/#rank-and-dense_rank 
+#9  With a window function, write a query that shows the film, its duration, and what percentile the duration fits into. 
 
 SELECT
 	film.title,
@@ -158,3 +189,5 @@ ORDER BY percentile DESC;
 
 
 #10  In under 100 words, explain what the difference is between set-based and procedural programming. Be sure to specify which sql and python are. 
+
+
