@@ -190,4 +190,6 @@ ORDER BY percentile DESC;
 
 #10  In under 100 words, explain what the difference is between set-based and procedural programming. Be sure to specify which sql and python are. 
 
-
+Python is an example of procedural programming, which is essentially a list of the steps/procedures needed to accomplish a particular task to achieve
+a particular result.  On the other hand, SQL is an example of set-based programming, which focuses more on the outcome to be attained by selecting 
+sets (rows/columns in tables within a database).
